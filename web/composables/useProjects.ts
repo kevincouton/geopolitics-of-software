@@ -63,6 +63,15 @@ export const useProjects = () => {
       credentials: 'include',
     })
   }
+  const trackProjectByOwnerName = async (
+    owner: string,
+    name: string,
+  ): Promise<TrackedProject> => {
+    return $fetch(`${baseURL}/me/tracked/${owner}/${name}`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+  }
   const untrackProject = async (projectId: string): Promise<void> => {
     await $fetch(`${baseURL}/me/tracked/${projectId}`, {
       method: 'DELETE',
@@ -75,6 +84,7 @@ export const useProjects = () => {
     getProjectSnapshots,
     getTrackedProjects,
     trackProject,
+    trackProjectByOwnerName,
     untrackProject,
   }
 }

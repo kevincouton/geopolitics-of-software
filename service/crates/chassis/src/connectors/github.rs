@@ -37,6 +37,22 @@ impl Client {
         }
     }
 
+    async fn request<T: serde::de::DeserializeOwned>(&self, path: &str) -> Result<T, ApiError> {
+        let url = format!("{}{path}", self.base_url);
+        let mut req = self
+            .http
+            .get(&url)
+            .header("User-Agent", "geosoft-trendboard");
+        if let Some(token) = &self.token {
+            req = req.bearer_auth(token);
+        }
+        let resp = req.send().await.map_err(|_| ApiError::Internal)?;
+        if !resp.status().is_success() {
+            return Err(ApiError::Internal);
+        }
+        resp.json().await.map_err(|_| ApiError::Internal)
+    }
+
     pub async fn list_trending(&self, _language: &str) -> Result<Vec<GithubRepo>, ApiError> {
         // MVP: use GitHub search API sorted by stars for "created:>2025-01-01".
         // In production, scrape github.com/trending or use a dedicated service.
@@ -60,6 +76,10 @@ impl Client {
         }
         let body: SearchResponse = resp.json().await.map_err(|_| ApiError::Internal)?;
         Ok(body.items)
+    }
+
+    pub async fn get_repo(&self, owner: &str, name: &str) -> Result<GithubRepo, ApiError> {
+        self.request(&format!("/repos/{owner}/{name}")).await
     }
 }
 

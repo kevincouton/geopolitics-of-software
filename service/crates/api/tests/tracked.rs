@@ -9,6 +9,10 @@ use chassis::{
 };
 use sqlx::PgPool;
 use tower::ServiceExt;
+use wiremock::{
+    matchers::{method, path},
+    Mock, MockServer, ResponseTemplate,
+};
 
 fn sample_repo() -> GithubRepo {
     GithubRepo {
@@ -26,11 +30,17 @@ fn sample_repo() -> GithubRepo {
 }
 
 fn app_state(pool: PgPool) -> AppState {
+    app_state_with(pool, "https://api.github.com", false)
+}
+
+fn app_state_with(pool: PgPool, github_base_url: &str, cookie_secure: bool) -> AppState {
     AppState {
         cfg: chassis::config::Config {
             database_url: "postgres://localhost/test".into(),
             api_port: 0,
             github_token: None,
+            github_base_url: github_base_url.into(),
+            cookie_secure,
             cors_origins: vec!["http://localhost:3000".into()],
         },
         pool,
@@ -49,6 +59,18 @@ fn extract_session_cookie(response: &axum::response::Response) -> Option<String>
                 .next()
                 .filter(|part| part.starts_with("session_id="))
                 .map(|part| part.to_string())
+        })
+}
+
+fn cookie_has_secure_flag(response: &axum::response::Response) -> bool {
+    response
+        .headers()
+        .get_all("set-cookie")
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .any(|cookie| {
+            cookie.starts_with("session_id=")
+                && cookie.split(';').any(|part| part.trim() == "Secure")
         })
 }
 
@@ -307,4 +329,114 @@ async fn cors_preflight_returns_allowed_headers(pool: PgPool) {
         .headers()
         .get("access-control-allow-methods")
         .is_some());
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn track_by_owner_name_fetches_and_tracks_project(pool: PgPool) {
+    let server = MockServer::start().await;
+    let repo = sample_repo();
+    let response_body = serde_json::json!({
+        "owner": { "login": repo.owner.login },
+        "name": repo.name,
+        "description": repo.description,
+        "language": repo.language,
+        "stargazers_count": repo.stargazers_count,
+        "forks_count": repo.forks_count,
+        "open_issues_count": repo.open_issues_count,
+        "topics": repo.topics,
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/repos/octocat/hello"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(response_body))
+        .mount(&server)
+        .await;
+
+    let app = router::app(app_state_with(pool, &server.uri(), false));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/me/tracked/octocat/hello")
+                .method("POST")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let item: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(item["github_owner"], "octocat");
+    assert_eq!(item["github_name"], "hello");
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn track_by_owner_name_missing_repo_returns_500(pool: PgPool) {
+    let server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/repos/nobody/nothing"))
+        .respond_with(ResponseTemplate::new(404))
+        .mount(&server)
+        .await;
+
+    let app = router::app(app_state_with(pool, &server.uri(), false));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/me/tracked/nobody/nothing")
+                .method("POST")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 500);
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn session_cookie_is_secure_when_configured(pool: PgPool) {
+    let repo = sample_repo();
+    let project = projects::upsert(&pool, &repo).await.unwrap();
+
+    let app = router::app(app_state_with(pool, "https://api.github.com", true));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/me/tracked")
+                .method("POST")
+                .header("content-type", "application/json")
+                .body(Body::from(format!("{{\"project_id\":\"{}\"}}", project.id)))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+    assert!(cookie_has_secure_flag(&response));
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn session_cookie_is_not_secure_by_default(pool: PgPool) {
+    let repo = sample_repo();
+    let project = projects::upsert(&pool, &repo).await.unwrap();
+
+    let app = router::app(app_state_with(pool, "https://api.github.com", false));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/me/tracked")
+                .method("POST")
+                .header("content-type", "application/json")
+                .body(Body::from(format!("{{\"project_id\":\"{}\"}}", project.id)))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+    assert!(!cookie_has_secure_flag(&response));
 }

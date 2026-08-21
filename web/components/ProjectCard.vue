@@ -3,11 +3,33 @@ import type { Project } from '~/composables/useProjects'
 
 const props = defineProps<{
   project: Project
+  showTrack?: boolean
 }>()
+
+const emit = defineEmits<{
+  (e: 'track', project: Project): void
+}>()
+
+const { trackProject } = useProjects()
+
+const tracked = ref(false)
+const tracking = ref(false)
 
 const githubUrl = computed(
   () => `https://github.com/${props.project.github_owner}/${props.project.github_name}`,
 )
+
+async function track() {
+  tracking.value = true
+  try {
+    await trackProject(props.project.id)
+    tracked.value = true
+    emit('track', props.project)
+  }
+  finally {
+    tracking.value = false
+  }
+}
 </script>
 
 <template>
@@ -59,5 +81,15 @@ const githubUrl = computed(
     </div>
 
     <slot name="footer" />
+
+    <button
+      v-if="showTrack"
+      type="button"
+      :disabled="tracking || tracked"
+      class="mt-3 w-full rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+      @click="track"
+    >
+      {{ tracked ? 'Tracked' : (tracking ? 'Tracking…' : 'Track this project') }}
+    </button>
   </article>
 </template>

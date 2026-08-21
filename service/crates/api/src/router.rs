@@ -4,7 +4,7 @@ use crate::{
 };
 use axum::{
     http::{header, Method},
-    routing::{delete, get},
+    routing::{delete, get, post},
     Router,
 };
 use tower_cookies::CookieManagerLayer;
@@ -36,6 +36,10 @@ pub fn app(state: AppState) -> Router {
         .route("/projects/:owner/:name", get(projects::detail))
         .route("/projects/:owner/:name/snapshots", get(projects::snapshots))
         .route("/me/tracked", get(tracked::list).post(tracked::track))
+        .route(
+            "/me/tracked/:owner/:name",
+            post(tracked::track_by_owner_name),
+        )
         .route("/me/tracked/:id", delete(tracked::untrack))
         .layer(CookieManagerLayer::new())
         .layer(cors)

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TrackedProject } from '~/composables/useProjects'
 
-const { getTrackedProjects, untrackProject } = useProjects()
+const { getTrackedProjects, untrackProject, trackProjectByOwnerName } = useProjects()
 
 const {
   data: tracked,
@@ -14,6 +14,31 @@ const {
 })
 
 const isEmpty = computed(() => !pending.value && !error.value && tracked.value.length === 0)
+
+const newRepo = ref('')
+const importing = ref(false)
+const importError = ref<string | null>(null)
+
+async function addRepo() {
+  importError.value = null
+  const parts = newRepo.value.trim().split('/')
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    importError.value = 'Enter a repo as owner/name'
+    return
+  }
+  importing.value = true
+  try {
+    await trackProjectByOwnerName(parts[0], parts[1])
+    newRepo.value = ''
+    await refresh()
+  }
+  catch (e) {
+    importError.value = 'Could not import repository. Check the owner/name and try again.'
+  }
+  finally {
+    importing.value = false
+  }
+}
 
 async function remove(projectId: string) {
   await untrackProject(projectId)
@@ -29,13 +54,38 @@ async function remove(projectId: string) {
     </p>
 
     <section class="mt-8">
-      <div v-if="pending" class="text-gray-500">
+      <div class="rounded-lg border bg-white p-4">
+        <label for="add-repo" class="text-sm font-medium text-gray-700">Add repository</label>
+        <div class="mt-2 flex gap-2">
+          <input
+            id="add-repo"
+            v-model="newRepo"
+            type="text"
+            placeholder="owner/name"
+            class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            @keydown.enter="addRepo"
+          >
+          <button
+            type="button"
+            :disabled="importing"
+            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            @click="addRepo"
+          >
+            {{ importing ? 'Importing…' : 'Add repo' }}
+          </button>
+        </div>
+        <p v-if="importError" class="mt-2 text-sm text-red-600">
+          {{ importError }}
+        </p>
+      </div>
+
+      <div v-if="pending" class="mt-6 text-gray-500">
         Loading tracked projects…
       </div>
 
       <div
         v-else-if="error"
-        class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700"
+        class="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700"
         role="alert"
       >
         <p class="font-medium">Could not load tracked projects</p>

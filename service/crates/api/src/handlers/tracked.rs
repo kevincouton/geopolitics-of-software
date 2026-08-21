@@ -4,14 +4,14 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use chassis::{error::ApiError, tracked};
+use chassis::{connectors::github::Client, error::ApiError, projects, tracked};
 use serde::Deserialize;
 use tower_cookies::{Cookie, Cookies};
 use uuid::Uuid;
 
 const SESSION_COOKIE: &str = "session_id";
 
-fn ensure_user_id(cookies: &Cookies) -> String {
+fn ensure_user_id(cookies: &Cookies, secure: bool) -> String {
     if let Some(cookie) = cookies.get(SESSION_COOKIE) {
         let value = cookie.value().to_string();
         if !value.is_empty() {
@@ -23,6 +23,7 @@ fn ensure_user_id(cookies: &Cookies) -> String {
         .http_only(true)
         .same_site(tower_cookies::cookie::SameSite::Lax)
         .path("/")
+        .secure(secure)
         .build();
     cookies.add(cookie);
     id
@@ -37,7 +38,7 @@ pub async fn list(
     State(state): State<AppState>,
     cookies: Cookies,
 ) -> Result<Json<Vec<tracked::TrackedProjectWithDetails>>, ApiError> {
-    let user_id = ensure_user_id(&cookies);
+    let user_id = ensure_user_id(&cookies, state.cfg.cookie_secure);
     let items = tracked::list_for_user(&state.pool, &user_id).await?;
     Ok(Json(items))
 }
@@ -47,8 +48,24 @@ pub async fn track(
     cookies: Cookies,
     Json(body): Json<TrackRequest>,
 ) -> Result<Json<tracked::TrackedProjectWithDetails>, ApiError> {
-    let user_id = ensure_user_id(&cookies);
+    let user_id = ensure_user_id(&cookies, state.cfg.cookie_secure);
     let item = tracked::track(&state.pool, &user_id, body.project_id).await?;
+    Ok(Json(item))
+}
+
+pub async fn track_by_owner_name(
+    State(state): State<AppState>,
+    cookies: Cookies,
+    Path((owner, name)): Path<(String, String)>,
+) -> Result<Json<tracked::TrackedProjectWithDetails>, ApiError> {
+    let user_id = ensure_user_id(&cookies, state.cfg.cookie_secure);
+    let client = Client::with_base_url(
+        state.cfg.github_token.clone(),
+        state.cfg.github_base_url.clone(),
+    );
+    let repo = client.get_repo(&owner, &name).await?;
+    let project = projects::upsert(&state.pool, &repo).await?;
+    let item = tracked::track(&state.pool, &user_id, project.id).await?;
     Ok(Json(item))
 }
 
@@ -57,7 +74,7 @@ pub async fn untrack(
     cookies: Cookies,
     Path(project_id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
-    let user_id = ensure_user_id(&cookies);
+    let user_id = ensure_user_id(&cookies, state.cfg.cookie_secure);
     tracked::untrack(&state.pool, &user_id, project_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

@@ -25,6 +25,22 @@ const {
   { server: false, default: () => [] },
 )
 
+const { trackProjectByOwnerName } = useProjects()
+
+const tracked = ref(false)
+const tracking = ref(false)
+
+async function track() {
+  tracking.value = true
+  try {
+    await trackProjectByOwnerName(owner.value, name.value)
+    tracked.value = true
+  }
+  finally {
+    tracking.value = false
+  }
+}
+
 const githubUrl = computed(
   () => `https://github.com/${owner.value}/${name.value}`,
 )
@@ -144,7 +160,17 @@ const error = computed(() => projectError.value || snapshotsError.value)
             {{ project.description }}
           </p>
         </div>
-        <ScoreBadge :score="project.score" />
+        <div class="flex flex-col items-end gap-3">
+          <ScoreBadge :score="project.score" />
+          <button
+            type="button"
+            :disabled="tracking || tracked"
+            class="rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+            @click="track"
+          >
+            {{ tracked ? 'Tracked' : (tracking ? 'Tracking…' : 'Track this project') }}
+          </button>
+        </div>
       </div>
 
       <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-gray-500">
