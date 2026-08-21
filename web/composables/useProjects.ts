@@ -29,6 +29,10 @@ export interface ProjectsQuery {
   offset?: number
 }
 
+export interface TrackedProject extends Project {
+  tracked_at: string
+}
+
 export const useProjects = () => {
   const { baseURL } = useApi()
   const getProjects = async (query: ProjectsQuery = {}): Promise<Project[]> => {
@@ -43,5 +47,28 @@ export const useProjects = () => {
   ): Promise<Snapshot[]> => {
     return $fetch(`${baseURL}/projects/${owner}/${name}/snapshots`)
   }
-  return { getProjects, getProject, getProjectSnapshots }
+  const getTrackedProjects = async (): Promise<TrackedProject[]> => {
+    return $fetch(`${baseURL}/me/tracked`, { credentials: 'include' })
+  }
+  const trackProject = async (projectId: string): Promise<TrackedProject> => {
+    return $fetch(`${baseURL}/me/tracked`, {
+      method: 'POST',
+      body: { project_id: projectId },
+      credentials: 'include',
+    })
+  }
+  const untrackProject = async (projectId: string): Promise<void> => {
+    await $fetch(`${baseURL}/me/tracked/${projectId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+  }
+  return {
+    getProjects,
+    getProject,
+    getProjectSnapshots,
+    getTrackedProjects,
+    trackProject,
+    untrackProject,
+  }
 }

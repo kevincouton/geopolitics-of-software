@@ -6,3 +6,4 @@ pub mod projects;
 pub mod scoring;
 pub mod snapshots;
 pub mod social;
+pub mod tracked;

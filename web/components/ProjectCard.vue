@@ -57,5 +57,7 @@ const githubUrl = computed(
         Gitee Mirror
       </span>
     </div>
+
+    <slot name="footer" />
   </article>
 </template>
