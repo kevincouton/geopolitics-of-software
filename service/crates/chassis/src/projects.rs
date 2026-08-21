@@ -69,3 +69,43 @@ pub async fn by_owner_name(
     .await
     .map_err(|_| ApiError::Internal)
 }
+
+pub async fn update_gitee_mirror(
+    pool: &DbPool,
+    id: Uuid,
+    gitee_owner: &str,
+    gitee_name: &str,
+) -> Result<Project, ApiError> {
+    sqlx::query_as::<_, Project>(
+        "UPDATE projects
+         SET gitee_owner = $2, gitee_name = $3, has_gitee_mirror = true, updated_at = NOW()
+         WHERE id = $1
+         RETURNING id, github_owner, github_name, gitee_owner, gitee_name, language, topics, description,
+                   stars, forks, open_issues, has_chinese_readme, has_gitee_mirror, created_at, updated_at",
+    )
+    .bind(id)
+    .bind(gitee_owner)
+    .bind(gitee_name)
+    .fetch_one(pool)
+    .await
+    .map_err(|_| ApiError::Internal)
+}
+
+pub async fn update_chinese_readme(
+    pool: &DbPool,
+    id: Uuid,
+    has_chinese_readme: bool,
+) -> Result<Project, ApiError> {
+    sqlx::query_as::<_, Project>(
+        "UPDATE projects
+         SET has_chinese_readme = $2, updated_at = NOW()
+         WHERE id = $1
+         RETURNING id, github_owner, github_name, gitee_owner, gitee_name, language, topics, description,
+                   stars, forks, open_issues, has_chinese_readme, has_gitee_mirror, created_at, updated_at",
+    )
+    .bind(id)
+    .bind(has_chinese_readme)
+    .fetch_one(pool)
+    .await
+    .map_err(|_| ApiError::Internal)
+}
