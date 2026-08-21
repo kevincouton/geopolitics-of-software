@@ -1,7 +1,8 @@
 use crate::{extract::Json as JsonBody, state::AppState};
-use axum::{extract::Path, extract::State, http::StatusCode, Json as AxumJson};
+use axum::{extract::Path, extract::State, Json as AxumJson};
 use chassis::{connectors::github::Client, error::ApiError, projects, tracked};
 use serde::Deserialize;
+use serde_json::json;
 use tower_cookies::{Cookie, Cookies};
 use uuid::Uuid;
 
@@ -69,8 +70,8 @@ pub async fn untrack(
     State(state): State<AppState>,
     cookies: Cookies,
     Path(project_id): Path<Uuid>,
-) -> Result<StatusCode, ApiError> {
+) -> Result<AxumJson<serde_json::Value>, ApiError> {
     let user_id = ensure_user_id(&cookies, state.cfg.cookie_secure);
     tracked::untrack(&state.pool, &user_id, project_id).await?;
-    Ok(StatusCode::NO_CONTENT)
+    Ok(AxumJson(json!({"status":"ok"})))
 }

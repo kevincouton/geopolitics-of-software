@@ -10,13 +10,19 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> Self {
-        let mut cors_origins = vec![
-            "http://localhost:3000".into(),
-            "http://localhost:8080".into(),
-        ];
-        if let Ok(extra) = std::env::var("NUXT_PUBLIC_API_URL") {
-            cors_origins.push(extra);
-        }
+        let cors_origins = std::env::var("CORS_ORIGINS")
+            .map(|v| {
+                v.split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            })
+            .unwrap_or_else(|_| {
+                vec![
+                    "http://localhost:3000".into(),
+                    "http://localhost:8080".into(),
+                ]
+            });
 
         Self {
             database_url: std::env::var("DATABASE_URL").expect("DATABASE_URL"),

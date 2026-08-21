@@ -158,7 +158,12 @@ async fn untrack_project(pool: PgPool) {
         )
         .await
         .unwrap();
-    assert_eq!(delete_response.status(), 204);
+    assert_eq!(delete_response.status(), 200);
+    let body = to_bytes(delete_response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["status"], "ok");
 
     let list_response = app
         .oneshot(
@@ -251,7 +256,12 @@ async fn tracked_projects_are_isolated_by_session(pool: PgPool) {
         )
         .await
         .unwrap();
-    assert_eq!(delete_response.status(), 204);
+    assert_eq!(delete_response.status(), 200);
+    let body = to_bytes(delete_response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["status"], "ok");
 
     let list_response = app
         .oneshot(

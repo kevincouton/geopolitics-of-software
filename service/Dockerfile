@@ -1,6 +1,7 @@
 FROM rust:1.96 AS builder
 WORKDIR /app
 COPY . .
+ENV SQLX_OFFLINE=true
 RUN cargo build --release -p api -p collectors
 
 FROM debian:bookworm-slim

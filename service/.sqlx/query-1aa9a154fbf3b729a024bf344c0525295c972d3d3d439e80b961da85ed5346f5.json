@@ -1,0 +1,113 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE projects\n        SET has_chinese_readme = $2, updated_at = NOW()\n        WHERE id = $1\n        RETURNING id, github_owner, github_name, gitee_owner, gitee_name, language, topics, description,\n                  stars, forks, open_issues, has_chinese_readme, has_gitee_mirror,\n                  NULL::INTEGER AS score, created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "github_owner",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "github_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "gitee_owner",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "gitee_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "language",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "topics",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 7,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "stars",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "forks",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "open_issues",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "has_chinese_readme",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 12,
+        "name": "has_gitee_mirror",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 13,
+        "name": "score",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 14,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      false,
+      false
+    ]
+  },
+  "hash": "1aa9a154fbf3b729a024bf344c0525295c972d3d3d439e80b961da85ed5346f5"
+}

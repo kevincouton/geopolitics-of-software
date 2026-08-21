@@ -1,0 +1,107 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        WITH inserted AS (\n            INSERT INTO tracked_projects (user_id, project_id)\n            VALUES ($1, $2)\n            ON CONFLICT (user_id, project_id) DO UPDATE SET created_at = EXCLUDED.created_at\n            RETURNING project_id, created_at\n        )\n        SELECT p.id, p.github_owner, p.github_name, p.gitee_owner, p.gitee_name, p.language,\n               p.topics, p.description, p.stars, p.forks, p.open_issues,\n               p.has_chinese_readme, p.has_gitee_mirror,\n               COALESCE(ds.asia_readiness_score, NULL) AS score, i.created_at AS tracked_at\n        FROM inserted i\n        JOIN projects p ON p.id = i.project_id\n        LEFT JOIN LATERAL (\n            SELECT asia_readiness_score\n            FROM daily_snapshots\n            WHERE project_id = p.id\n            ORDER BY snapshot_date DESC\n            LIMIT 1\n        ) ds ON true\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "github_owner",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "github_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "gitee_owner",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "gitee_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "language",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "topics",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 7,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "stars",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "forks",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "open_issues",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "has_chinese_readme",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 12,
+        "name": "has_gitee_mirror",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 13,
+        "name": "score",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 14,
+        "name": "tracked_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "3af79a210a5b8f10b0e70fbdc53e28f8f5e27212e5a9e0046f9602ef4748db54"
+}

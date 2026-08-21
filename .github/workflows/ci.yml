@@ -33,6 +33,10 @@ jobs:
           workspaces: service
       - run: cargo fmt --check
         working-directory: ./service
+      - run: cargo sqlx prepare --workspace --check
+        working-directory: ./service
+        env:
+          DATABASE_URL: postgres://geosoft:geosoft@localhost:5432/geosoft
       - run: cargo clippy -- -D warnings
         working-directory: ./service
       - run: cargo test

@@ -1,0 +1,83 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO daily_snapshots (project_id, snapshot_date, stars, forks, asia_readiness_score, docs_score, platform_score, social_score, community_score)\n        VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7, $8)\n        ON CONFLICT (project_id, snapshot_date)\n        DO UPDATE SET stars = EXCLUDED.stars, forks = EXCLUDED.forks,\n                      asia_readiness_score = EXCLUDED.asia_readiness_score,\n                      docs_score = EXCLUDED.docs_score, platform_score = EXCLUDED.platform_score,\n                      social_score = EXCLUDED.social_score, community_score = EXCLUDED.community_score\n        RETURNING id, project_id, snapshot_date, stars, forks, asia_readiness_score, docs_score, platform_score, social_score, community_score\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "project_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "snapshot_date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 3,
+        "name": "stars",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "forks",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "asia_readiness_score",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "docs_score",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "platform_score",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "social_score",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "community_score",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        "Int4",
+        "Int4",
+        "Int4",
+        "Int4",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "55917fa536c114c44adc99698112347d10aa7bffed5137059aff28ffd9eda123"
+}

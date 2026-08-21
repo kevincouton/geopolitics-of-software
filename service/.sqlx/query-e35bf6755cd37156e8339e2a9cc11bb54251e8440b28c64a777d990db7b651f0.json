@@ -1,0 +1,113 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT p.*, COALESCE(ds.asia_readiness_score, NULL) AS score\n        FROM projects p\n        LEFT JOIN LATERAL (\n            SELECT asia_readiness_score\n            FROM daily_snapshots\n            WHERE project_id = p.id\n            ORDER BY snapshot_date DESC\n            LIMIT 1\n        ) ds ON true\n        ORDER BY p.stars DESC\n        LIMIT $1 OFFSET $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "github_owner",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "github_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "gitee_owner",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "gitee_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "language",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "topics",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 7,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "stars",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "forks",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "open_issues",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "has_chinese_readme",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 12,
+        "name": "has_gitee_mirror",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 13,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 14,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "score",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "e35bf6755cd37156e8339e2a9cc11bb54251e8440b28c64a777d990db7b651f0"
+}
