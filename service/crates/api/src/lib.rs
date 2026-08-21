@@ -1,1 +1,3 @@
-//! API crate placeholder for GeoSoft TrendBoard.
+pub mod handlers;
+pub mod router;
+pub mod state;
