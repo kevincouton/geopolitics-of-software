@@ -1,6 +1,4 @@
-use chassis::{
-    connectors::github, db::DbPool, error::ApiError, projects, scoring, snapshots,
-};
+use chassis::{connectors::github, db::DbPool, error::ApiError, projects, scoring, snapshots};
 
 pub async fn run(pool: &DbPool, github_token: Option<&str>) -> Result<(), ApiError> {
     let client = github::Client::new(github_token.map(|s| s.to_string()));
