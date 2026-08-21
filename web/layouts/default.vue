@@ -6,6 +6,8 @@
         <nav class="flex gap-4 text-sm font-medium text-gray-600">
           <NuxtLink to="/" class="hover:text-gray-900">Trending</NuxtLink>
           <NuxtLink to="/dashboard" class="hover:text-gray-900">Dashboard</NuxtLink>
+          <NuxtLink to="/methodology" class="hover:text-gray-900">Methodology</NuxtLink>
+          <NuxtLink to="/about" class="hover:text-gray-900">About</NuxtLink>
         </nav>
       </div>
     </header>
