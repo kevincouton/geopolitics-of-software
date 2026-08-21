@@ -6,5 +6,6 @@ pub fn app(state: AppState) -> Router {
         .route("/healthz", get(health::health))
         .route("/projects", get(projects::list))
         .route("/projects/:owner/:name", get(projects::detail))
+        .route("/projects/:owner/:name/snapshots", get(projects::snapshots))
         .with_state(state)
 }

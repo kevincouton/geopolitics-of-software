@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     Json,
 };
-use chassis::{error::ApiError, projects};
+use chassis::{error::ApiError, projects, snapshots};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -38,4 +38,15 @@ pub async fn detail(
         .await?
         .ok_or(ApiError::NotFound)
         .map(Json)
+}
+
+pub async fn snapshots(
+    State(state): State<AppState>,
+    Path((owner, name)): Path<(String, String)>,
+) -> Result<Json<Vec<snapshots::DailySnapshot>>, ApiError> {
+    let project = projects::by_owner_name(&state.pool, &owner, &name)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    let snaps = snapshots::list_for_project(&state.pool, project.id).await?;
+    Ok(Json(snaps))
 }

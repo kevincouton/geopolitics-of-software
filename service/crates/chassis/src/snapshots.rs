@@ -47,3 +47,18 @@ pub async fn record(
     .await
     .map_err(|_| ApiError::Internal)
 }
+
+pub async fn list_for_project(
+    pool: &DbPool,
+    project_id: Uuid,
+) -> Result<Vec<DailySnapshot>, ApiError> {
+    sqlx::query_as::<_, DailySnapshot>(
+        "SELECT * FROM daily_snapshots
+         WHERE project_id = $1
+         ORDER BY snapshot_date ASC",
+    )
+    .bind(project_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|_| ApiError::Internal)
+}

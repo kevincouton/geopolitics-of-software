@@ -6,7 +6,7 @@ use axum::{
 use chassis::{
     config::Config,
     connectors::github::{GithubRepo, Owner},
-    projects,
+    projects, scoring, snapshots,
 };
 use sqlx::PgPool;
 use tower::ServiceExt;
@@ -90,6 +90,48 @@ async fn detail_missing_project_returns_404(pool: PgPool) {
         .oneshot(
             Request::builder()
                 .uri("/projects/nobody/nothing")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 404);
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn snapshots_project_endpoint(pool: PgPool) {
+    let repo = sample_repo();
+    let project = projects::upsert(&pool, &repo).await.unwrap();
+    let score = scoring::score(&project, &[]);
+    snapshots::record(&pool, project.id, project.stars, project.forks, &score)
+        .await
+        .unwrap();
+
+    let app = router::app(app_state(pool));
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/projects/octocat/hello/snapshots")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let items: Vec<serde_json::Value> = serde_json::from_slice(&body).unwrap();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0]["project_id"], project.id.to_string());
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn snapshots_missing_project_returns_404(pool: PgPool) {
+    let app = router::app(app_state(pool));
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/projects/nobody/nothing/snapshots")
                 .body(Body::empty())
                 .unwrap(),
         )
