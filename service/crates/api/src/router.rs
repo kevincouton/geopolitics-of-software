@@ -15,6 +15,10 @@ async fn fallback() -> ApiError {
     ApiError::NotFound
 }
 
+async fn method_not_allowed() -> ApiError {
+    ApiError::MethodNotAllowed
+}
+
 pub fn app(state: AppState) -> Router {
     let allowed_origins: Vec<_> = state
         .cfg
@@ -46,8 +50,9 @@ pub fn app(state: AppState) -> Router {
             post(tracked::track_by_owner_name),
         )
         .route("/me/tracked/:id", delete(tracked::untrack))
+        .fallback(fallback)
+        .method_not_allowed_fallback(method_not_allowed)
         .layer(CookieManagerLayer::new())
         .layer(cors)
-        .fallback(fallback)
         .with_state(state)
 }

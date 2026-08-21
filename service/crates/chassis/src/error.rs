@@ -7,6 +7,8 @@ pub enum ApiError {
     NotFound,
     #[error("bad request")]
     BadRequest,
+    #[error("method not allowed")]
+    MethodNotAllowed,
     #[error("internal error")]
     Internal,
 }
@@ -16,6 +18,7 @@ impl IntoResponse for ApiError {
         let status = match &self {
             ApiError::NotFound => StatusCode::NOT_FOUND,
             ApiError::BadRequest => StatusCode::BAD_REQUEST,
+            ApiError::MethodNotAllowed => StatusCode::METHOD_NOT_ALLOWED,
             ApiError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
         };
         (status, Json(json!({ "error": self.to_string() }))).into_response()
