@@ -142,3 +142,22 @@ async fn snapshots_missing_project_returns_404(pool: PgPool) {
         .unwrap();
     assert_eq!(response.status(), 404);
 }
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn invalid_query_string_returns_json_400(pool: PgPool) {
+    let app = router::app(app_state(pool));
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/projects?limit=not-a-number")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), 400);
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert!(json.get("error").is_some());
+}

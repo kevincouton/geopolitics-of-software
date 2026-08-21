@@ -373,7 +373,7 @@ async fn track_by_owner_name_fetches_and_tracks_project(pool: PgPool) {
 }
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn track_by_owner_name_missing_repo_returns_500(pool: PgPool) {
+async fn track_by_owner_name_missing_repo_returns_404(pool: PgPool) {
     let server = MockServer::start().await;
 
     Mock::given(method("GET"))
@@ -394,7 +394,49 @@ async fn track_by_owner_name_missing_repo_returns_500(pool: PgPool) {
         )
         .await
         .unwrap();
-    assert_eq!(response.status(), 500);
+    assert_eq!(response.status(), 404);
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn invalid_json_body_returns_json_400(pool: PgPool) {
+    let app = router::app(app_state(pool));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/me/tracked")
+                .method("POST")
+                .header("content-type", "application/json")
+                .body(Body::from("not valid json"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), 400);
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert!(json.get("error").is_some());
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn unknown_route_returns_json_404(pool: PgPool) {
+    let app = router::app(app_state(pool));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/this-route-does-not-exist")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), 404);
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert!(json.get("error").is_some());
 }
 
 #[sqlx::test(migrations = "../../migrations")]

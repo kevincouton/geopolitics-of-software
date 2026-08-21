@@ -1,8 +1,5 @@
-use crate::state::AppState;
-use axum::{
-    extract::{Path, Query, State},
-    Json,
-};
+use crate::{extract::Query, state::AppState};
+use axum::{extract::Path, extract::State, Json};
 use chassis::{error::ApiError, projects, snapshots};
 use serde::Deserialize;
 

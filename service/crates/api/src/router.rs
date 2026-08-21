@@ -7,8 +7,13 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use chassis::error::ApiError;
 use tower_cookies::CookieManagerLayer;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+
+async fn fallback() -> ApiError {
+    ApiError::NotFound
+}
 
 pub fn app(state: AppState) -> Router {
     let allowed_origins: Vec<_> = state
@@ -43,5 +48,6 @@ pub fn app(state: AppState) -> Router {
         .route("/me/tracked/:id", delete(tracked::untrack))
         .layer(CookieManagerLayer::new())
         .layer(cors)
+        .fallback(fallback)
         .with_state(state)
 }

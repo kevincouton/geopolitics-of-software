@@ -48,7 +48,11 @@ impl Client {
         }
         let resp = req.send().await.map_err(|_| ApiError::Internal)?;
         if !resp.status().is_success() {
-            return Err(ApiError::Internal);
+            return Err(if resp.status() == reqwest::StatusCode::NOT_FOUND {
+                ApiError::NotFound
+            } else {
+                ApiError::Internal
+            });
         }
         resp.json().await.map_err(|_| ApiError::Internal)
     }
@@ -72,7 +76,11 @@ impl Client {
         }
         let resp = req.send().await.map_err(|_| ApiError::Internal)?;
         if !resp.status().is_success() {
-            return Err(ApiError::Internal);
+            return Err(if resp.status() == reqwest::StatusCode::NOT_FOUND {
+                ApiError::NotFound
+            } else {
+                ApiError::Internal
+            });
         }
         let body: SearchResponse = resp.json().await.map_err(|_| ApiError::Internal)?;
         Ok(body.items)

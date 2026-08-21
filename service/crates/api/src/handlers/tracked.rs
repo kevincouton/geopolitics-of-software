@@ -1,9 +1,5 @@
-use crate::state::AppState;
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    Json,
-};
+use crate::{extract::Json as JsonBody, state::AppState};
+use axum::{extract::Path, extract::State, http::StatusCode, Json as AxumJson};
 use chassis::{connectors::github::Client, error::ApiError, projects, tracked};
 use serde::Deserialize;
 use tower_cookies::{Cookie, Cookies};
@@ -37,27 +33,27 @@ pub struct TrackRequest {
 pub async fn list(
     State(state): State<AppState>,
     cookies: Cookies,
-) -> Result<Json<Vec<tracked::TrackedProjectWithDetails>>, ApiError> {
+) -> Result<AxumJson<Vec<tracked::TrackedProjectWithDetails>>, ApiError> {
     let user_id = ensure_user_id(&cookies, state.cfg.cookie_secure);
     let items = tracked::list_for_user(&state.pool, &user_id).await?;
-    Ok(Json(items))
+    Ok(AxumJson(items))
 }
 
 pub async fn track(
     State(state): State<AppState>,
     cookies: Cookies,
-    Json(body): Json<TrackRequest>,
-) -> Result<Json<tracked::TrackedProjectWithDetails>, ApiError> {
+    JsonBody(body): JsonBody<TrackRequest>,
+) -> Result<AxumJson<tracked::TrackedProjectWithDetails>, ApiError> {
     let user_id = ensure_user_id(&cookies, state.cfg.cookie_secure);
     let item = tracked::track(&state.pool, &user_id, body.project_id).await?;
-    Ok(Json(item))
+    Ok(AxumJson(item))
 }
 
 pub async fn track_by_owner_name(
     State(state): State<AppState>,
     cookies: Cookies,
     Path((owner, name)): Path<(String, String)>,
-) -> Result<Json<tracked::TrackedProjectWithDetails>, ApiError> {
+) -> Result<AxumJson<tracked::TrackedProjectWithDetails>, ApiError> {
     let user_id = ensure_user_id(&cookies, state.cfg.cookie_secure);
     let client = Client::with_base_url(
         state.cfg.github_token.clone(),
@@ -66,7 +62,7 @@ pub async fn track_by_owner_name(
     let repo = client.get_repo(&owner, &name).await?;
     let project = projects::upsert(&state.pool, &repo).await?;
     let item = tracked::track(&state.pool, &user_id, project.id).await?;
-    Ok(Json(item))
+    Ok(AxumJson(item))
 }
 
 pub async fn untrack(
