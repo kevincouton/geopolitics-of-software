@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: geosoft
+      POSTGRES_PASSWORD: geosoft
+      POSTGRES_DB: geosoft
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  api:
+    build: ./service
+    environment:
+      DATABASE_URL: postgres://geosoft:geosoft@postgres:5432/geosoft
+      API_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+  web:
+    build: ./web
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+volumes:
+  postgres_data:
