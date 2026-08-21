@@ -32,6 +32,7 @@ fn app_state(pool: PgPool) -> AppState {
             database_url: "postgres://localhost/test".into(),
             api_port: 0,
             github_token: None,
+            cors_origins: vec!["http://localhost:3000".into()],
         },
         pool,
     }

@@ -31,6 +31,7 @@ fn app_state(pool: PgPool) -> AppState {
             database_url: "postgres://localhost/test".into(),
             api_port: 0,
             github_token: None,
+            cors_origins: vec!["http://localhost:3000".into()],
         },
         pool,
     }
@@ -245,4 +246,65 @@ async fn tracked_projects_are_isolated_by_session(pool: PgPool) {
         .unwrap();
     let items: Vec<serde_json::Value> = serde_json::from_slice(&body).unwrap();
     assert!(items.is_empty());
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn track_unknown_project_returns_404(pool: PgPool) {
+    let app = router::app(app_state(pool));
+    let unknown_project_id = uuid::Uuid::new_v4();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/me/tracked")
+                .method("POST")
+                .header("content-type", "application/json")
+                .body(Body::from(format!(
+                    "{{\"project_id\":\"{}\"}}",
+                    unknown_project_id
+                )))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 404);
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn cors_preflight_returns_allowed_headers(pool: PgPool) {
+    let app = router::app(app_state(pool));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/me/tracked")
+                .method("OPTIONS")
+                .header("origin", "http://localhost:3000")
+                .header("access-control-request-method", "POST")
+                .header("access-control-request-headers", "content-type")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert!(response.status().is_success());
+    assert_eq!(
+        response
+            .headers()
+            .get("access-control-allow-origin")
+            .and_then(|v| v.to_str().ok()),
+        Some("http://localhost:3000")
+    );
+    assert_eq!(
+        response
+            .headers()
+            .get("access-control-allow-credentials")
+            .and_then(|v| v.to_str().ok()),
+        Some("true")
+    );
+    assert!(response
+        .headers()
+        .get("access-control-allow-methods")
+        .is_some());
 }

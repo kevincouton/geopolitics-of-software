@@ -2,13 +2,19 @@ export interface Project {
   id: string
   github_owner: string
   github_name: string
+  gitee_owner: string | null
+  gitee_name: string | null
   language: string | null
+  topics: string[]
+  description: string | null
   stars: number
   forks: number
-  description: string | null
+  open_issues: number
   has_chinese_readme: boolean
   has_gitee_mirror: boolean
   score: number | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Snapshot {

@@ -19,7 +19,12 @@ fn ensure_user_id(cookies: &Cookies) -> String {
         }
     }
     let id = Uuid::new_v4().to_string();
-    cookies.add(Cookie::new(SESSION_COOKIE, id.clone()));
+    let cookie = Cookie::build((SESSION_COOKIE, id.clone()))
+        .http_only(true)
+        .same_site(tower_cookies::cookie::SameSite::Lax)
+        .path("/")
+        .build();
+    cookies.add(cookie);
     id
 }
 

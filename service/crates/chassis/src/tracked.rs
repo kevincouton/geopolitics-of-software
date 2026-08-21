@@ -75,7 +75,14 @@ pub async fn track(
     .bind(project_id)
     .fetch_one(pool)
     .await
-    .map_err(|_| ApiError::Internal)
+    .map_err(|e| {
+        if let Some(db_err) = e.as_database_error() {
+            if db_err.code().as_deref() == Some("23503") {
+                return ApiError::NotFound;
+            }
+        }
+        ApiError::Internal
+    })
 }
 
 pub async fn untrack(pool: &DbPool, user_id: &str, project_id: Uuid) -> Result<(), ApiError> {
