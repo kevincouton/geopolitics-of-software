@@ -3,6 +3,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ARG NUXT_PUBLIC_API_URL
+ENV NUXT_PUBLIC_API_URL=${NUXT_PUBLIC_API_URL:-http://localhost:8080}
 RUN npm run build
 
 FROM nginx:alpine
