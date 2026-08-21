@@ -8,12 +8,18 @@ export interface Project {
   description: string | null
   has_chinese_readme: boolean
   has_gitee_mirror: boolean
+  score: number | null
+}
+
+export interface ProjectsQuery {
+  limit?: number
+  offset?: number
 }
 
 export const useProjects = () => {
   const { baseURL } = useApi()
-  const getProjects = async (): Promise<Project[]> => {
-    return $fetch(`${baseURL}/projects`)
+  const getProjects = async (query: ProjectsQuery = {}): Promise<Project[]> => {
+    return $fetch(`${baseURL}/projects`, { query })
   }
   const getProject = async (owner: string, name: string): Promise<Project> => {
     return $fetch(`${baseURL}/projects/${owner}/${name}`)

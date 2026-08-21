@@ -10,17 +10,23 @@ use serde::Deserialize;
 pub struct ListQuery {
     #[serde(default = "default_limit")]
     limit: i64,
+    #[serde(default = "default_offset")]
+    offset: i64,
 }
 
 fn default_limit() -> i64 {
-    50
+    20
+}
+
+fn default_offset() -> i64 {
+    0
 }
 
 pub async fn list(
     State(state): State<AppState>,
     Query(q): Query<ListQuery>,
 ) -> Result<Json<Vec<projects::Project>>, ApiError> {
-    let projects = projects::list(&state.pool, q.limit).await?;
+    let projects = projects::list_paginated(&state.pool, q.limit, q.offset).await?;
     Ok(Json(projects))
 }
 

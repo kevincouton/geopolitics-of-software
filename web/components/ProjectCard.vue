@@ -8,13 +8,6 @@ const props = defineProps<{
 const githubUrl = computed(
   () => `https://github.com/${props.project.github_owner}/${props.project.github_name}`,
 )
-
-const asiaScore = computed(() => {
-  let score = 40
-  if (props.project.has_chinese_readme) score += 30
-  if (props.project.has_gitee_mirror) score += 30
-  return score
-})
 </script>
 
 <template>
@@ -33,7 +26,7 @@ const asiaScore = computed(() => {
           {{ project.description }}
         </p>
       </div>
-      <ScoreBadge :score="asiaScore" />
+      <ScoreBadge :score="project.score" />
     </div>
 
     <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-500">

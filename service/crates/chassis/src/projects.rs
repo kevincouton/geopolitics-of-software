@@ -19,6 +19,8 @@ pub struct Project {
     pub open_issues: i32,
     pub has_chinese_readme: bool,
     pub has_gitee_mirror: bool,
+    #[sqlx(default)]
+    pub score: Option<i32>,
     pub created_at: chrono::DateTime<Utc>,
     pub updated_at: chrono::DateTime<Utc>,
 }
@@ -53,6 +55,31 @@ pub async fn list(pool: &DbPool, limit: i64) -> Result<Vec<Project>, ApiError> {
         .fetch_all(pool)
         .await
         .map_err(|_| ApiError::Internal)
+}
+
+pub async fn list_paginated(
+    pool: &DbPool,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<Project>, ApiError> {
+    sqlx::query_as::<_, Project>(
+        "SELECT p.*, ds.asia_readiness_score AS score
+         FROM projects p
+         LEFT JOIN LATERAL (
+             SELECT asia_readiness_score
+             FROM daily_snapshots
+             WHERE project_id = p.id
+             ORDER BY snapshot_date DESC
+             LIMIT 1
+         ) ds ON true
+         ORDER BY p.stars DESC
+         LIMIT $1 OFFSET $2",
+    )
+    .bind(limit)
+    .bind(offset)
+    .fetch_all(pool)
+    .await
+    .map_err(|_| ApiError::Internal)
 }
 
 pub async fn by_owner_name(
