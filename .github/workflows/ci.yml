@@ -39,6 +39,12 @@ jobs:
         working-directory: ./service
         env:
           DATABASE_URL: postgres://geosoft:geosoft@localhost:5432/geosoft
+      - run: cargo clippy -p collectors -- -D warnings
+        working-directory: ./service
+      - run: cargo test -p collectors
+        working-directory: ./service
+        env:
+          DATABASE_URL: postgres://geosoft:geosoft@localhost:5432/geosoft
 
   web:
     runs-on: ubuntu-latest
