@@ -2,13 +2,14 @@
 name = "collectors"
 version = "0.1.0"
 edition = "2021"
+publish = false
 
 [[bin]]
 name = "collectors"
 path = "src/main.rs"
 
 [dependencies]
-chassis = { path = "../chassis" }
+chassis = { version = "0.1.0", path = "../chassis" }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
