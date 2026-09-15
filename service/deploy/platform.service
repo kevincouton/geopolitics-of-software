@@ -1,0 +1,14 @@
+[Unit]
+Description=geopolitics-of-software platform server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/geopolitics-of-software-server
+WorkingDirectory=/root/geopolitics-of-software
+Environment=DATABASE_PATH=/var/lib/geopolitics-of-software/geopolitics-of-software.db
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,8 @@
 # GeoSoft TrendBoard
 
 > **Geopolitics of Software** — a dashboard that tracks GitHub trending projects and scores their readiness for China and Asia.
+>
+> Domain: `geopolitics-of-software.lucanian.app`
 
 ## What it does
 
