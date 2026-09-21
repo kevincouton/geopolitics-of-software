@@ -1,0 +1,12 @@
+# Rust
+target/
+
+# Node / Nuxt
+node_modules/
+.output/
+.nuxt/
+dist/
+
+# Env and local data
+.env
+*.db
