@@ -35,6 +35,7 @@ fn app_state(pool: PgPool) -> AppState {
             github_base_url: "https://api.github.com".into(),
             cookie_secure: false,
             cors_origins: vec!["http://localhost:3000".into()],
+            sentry_dsn: String::new(),
         },
         pool,
     }

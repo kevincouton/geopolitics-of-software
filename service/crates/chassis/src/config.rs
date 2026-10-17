@@ -6,6 +6,7 @@ pub struct Config {
     pub github_base_url: String,
     pub cookie_secure: bool,
     pub cors_origins: Vec<String>,
+    pub sentry_dsn: String,
 }
 
 impl Config {
@@ -37,6 +38,7 @@ impl Config {
                 .map(|v| v == "true")
                 .unwrap_or(false),
             cors_origins,
+            sentry_dsn: std::env::var("SENTRY_DSN").unwrap_or_default(),
         }
     }
 }

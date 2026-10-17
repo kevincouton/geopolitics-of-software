@@ -7,6 +7,8 @@ Type=simple
 ExecStart=/usr/local/bin/geopolitics-of-software-server
 WorkingDirectory=/root/geopolitics-of-software
 Environment=DATABASE_PATH=/var/lib/geopolitics-of-software/geopolitics-of-software.db
+# Optional env file on the host (SENTRY_DSN, SENTRY_RELEASE, ...).
+EnvironmentFile=-/etc/geopolitics-of-software/env
 Restart=on-failure
 RestartSec=3
 
